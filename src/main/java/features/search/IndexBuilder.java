@@ -22,15 +22,14 @@ public class IndexBuilder {
 
     public void indexDocument(Book book) {
 
-        StringBuilder bookData = new StringBuilder();
-        bookData.append(book.getTitle()).append(" ");
-        bookData.append(book.getAuthor()).append(" ");
-        bookData.append(book.getDescription()).append(" ");
-        bookData.append(book.getCategory()).append(" ");
-        bookData.append(book.getProgLang()).append(" ");
-        bookData.append(String.join(" ", book.getTag()));
+        String bookData = book.getTitle() + " " +
+                book.getAuthor() + " " +
+                book.getDescription() + " " +
+                book.getCategory() + " " +
+                book.getProgLang() + " " +
+                String.join(" ", book.getTag());
 
-        List<String> stemmedTokens = textProcessor.process(bookData.toString());
+        List<String> stemmedTokens = textProcessor.process(bookData);
         Map<String, List<Integer>> termPositions = new HashMap<>();
         for (int pos = 0; pos < stemmedTokens.size(); pos++) {
             String term = stemmedTokens.get(pos);

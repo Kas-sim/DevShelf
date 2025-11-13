@@ -45,8 +45,12 @@ public class Main {
         Set<String> stopWords = StopWordLoader.loadStopWords(STOPWORD_FILE_PATH);
         TextProcessor textProcessor = new TextProcessor(stopWords);
 
-        QueryProcessor queryProcessor = new QueryProcessor(textProcessor, loadedData.getInvertedIndex(),
-                loadedData.getTfIdfVectors(), loadedData.getIdfScores());
+        QueryProcessor queryProcessor = new QueryProcessor(
+                textProcessor,
+                loadedData.getInvertedIndex(),
+                loadedData.getTfIdfVectors(),
+                loadedData.getIdfScores()
+        );
 
         LoggingService loggingService = new LoggingService(LOGS_FILE_PATH);
         ReRanker reRanker = new ReRanker(bookMap, POPULARITY_FILE_PATH);

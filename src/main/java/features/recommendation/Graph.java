@@ -78,7 +78,7 @@ public class Graph {
         }
     }
 
-    // --- BFS-based recommendations ---
+    // --- BFS-based recommendations --- #BFS
     public List<String> recommendBooks(String startTitle, int maxRecommendations) {
         if (startTitle == null || !adjList.containsKey(normalize(startTitle))) return Collections.emptyList();
 

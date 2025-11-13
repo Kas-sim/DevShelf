@@ -25,6 +25,7 @@ public class SearchIndexData {
 }
 
 /**
-* Contain Our InvertedIndex and Tf-Idf ready to be loaded into json
+ * SearchIndexData -> InvertedIndex, tfIdfVectors & idfScores.
+* Contain Our InvertedIndex and Tf-Idf, idfScores ready to be loaded into json
  * json to Map and Map to json
  */

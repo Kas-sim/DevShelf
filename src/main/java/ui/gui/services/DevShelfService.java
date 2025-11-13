@@ -5,9 +5,9 @@ import domain.SearchResult;
 import features.search.QueryProcessor;
 import features.search.ReRanker;
 import features.search.Suggester;
-import utils.LoggingService;
+import utils.LoggingService; // (Moved to utils? Check your imports)
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,11 +30,9 @@ public class DevShelfService {
         this.loggingService = loggingService;
     }
 
-    /**
-     * Searches for books. If no results, tries to correct the spelling.
-     * Returns a wrapper object or list.
-     */
     public SearchResponse search(String query) {
+        System.out.println("🔍 GUI Processing Query: [" + query + "]");
+
         // 1. Raw Search
         List<SearchResult> results = queryProcessor.search(query);
         String usedQuery = query;
@@ -44,29 +42,43 @@ public class DevShelfService {
         if (results.isEmpty()) {
             String suggestion = suggester.suggestSimilar(query);
             if (suggestion != null) {
+                System.out.println("💡 Suggestion found: " + suggestion);
                 results = queryProcessor.search(suggestion);
                 usedQuery = suggestion;
                 isSuggestion = true;
             }
         }
 
-        // 3. Re-Rank
+        // 3. Re-Rank (The "Intelligence" Layer)
+        // We explicitly re-rank to ensure popularity is accounted for
         List<SearchResult> rankedResults = reRanker.reRank(results, usedQuery);
 
-        // 4. Convert to Books
-        List<Book> books = rankedResults.stream()
-                .map(r -> bookMap.get(r.getDocId()))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        // --- DEBUGGING: Print top 5 results to Console to compare with CLI ---
+        System.out.println("📊 Top 5 Results (DocID : Score):");
+        for (int i = 0; i < Math.min(5, rankedResults.size()); i++) {
+            SearchResult r = rankedResults.get(i);
+            System.out.printf("   [%d] DocID: %d | Score: %.4f%n", i+1, r.getDocId(), r.getScore());
+        }
+        // ---------------------------------------------------------------------
+
+        // 4. Convert to Books (Preserving Order strictly)
+        List<Book> books = new ArrayList<>();
+        for (SearchResult res : rankedResults) {
+            Book b = bookMap.get(res.getDocId());
+            if (b != null) {
+                books.add(b);
+            }
+        }
 
         return new SearchResponse(books, isSuggestion, usedQuery);
     }
 
     public void logClick(String query, int bookId) {
+        System.out.println("🖱️ Click Logged: BookID " + bookId + " for query '" + query + "'");
         loggingService.logClick(query, bookId);
     }
 
-    // --- Helper Class to pass data back to GUI ---
+    // Helper class remains the same...
     public static class SearchResponse {
         public final List<Book> books;
         public final boolean isSuggestion;

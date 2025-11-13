@@ -26,7 +26,7 @@ public class BookSearchEngine {
     private final CliView view;
 
     // --- State for the action loop ---
-    private Map<String, Object> currentFilters;
+    private final Map<String, Object> currentFilters;
     private String currentSortMode;
     private boolean isSortAscending;
 
@@ -171,11 +171,73 @@ public class BookSearchEngine {
         view.showRelated(related);
     }
 
-    private void handleNoResults(String query) {
-        String suggestion = suggester.suggestSimilar(query);
+    // This method goes inside core/BookSearchEngine.java
+
+/**
+ * Handles the logic for when a query returns zero results.
+ * It will try to find a suggestion and, if successful,
+ * will display those new results.
+ *
+ * @param query The original, failed search query.
+ */
+private void handleNoResults(String query) {
+
+    // --- 1. Tell the View to show the "No results" message ---
+    // We do this by calling showResults with an empty list.
+    // The View's internal logic will print the "❌ No results..." message.
+    view.showResults(query, new ArrayList<>());
+
+    // --- 2. Get Suggestion ---
+    // (Same as your old code)
+    // We ask our Suggester service for a "Did you mean?" suggestion.
+    String suggestion = suggester.suggestSimilar(query);
+
+    if (suggestion != null) {
+
+        // --- 3. Show Suggestion ---
+        // (Old: System.out.println)
+        // (New: Tell the View to show it)
         view.showSuggestion(suggestion);
-        // ... (rest of suggestion logic) ...
+
+        // --- 4. Search using the suggestion ---
+        // (Same as your old code)
+        List<SearchResult> suggestedResults = queryProcessor.search(suggestion);
+
+        if (!suggestedResults.isEmpty()) {
+
+            // --- 5. THE FIX: Tell the user we are auto-searching! ---
+            view.showMessage("ℹ️ Showing results for the suggestion \"" + suggestion + "\" instead.");
+
+            // --- 6. Re-Rank and Convert Results ---
+            // Your old code forgot to re-rank. This new version does.
+            List<SearchResult> rerankedResults = reRanker.reRank(suggestedResults, suggestion);
+
+            List<Book> booksToDisplay = rerankedResults.stream()
+                    .map(r -> bookMap.get(r.getDocId()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            // --- 7. Show the *new* results ---
+            // (Old: SortBooks.printBooks)
+            // (New: Tell the View to show results for the *suggestion*)
+            view.showResults(suggestion, booksToDisplay);
+
+            // --- 8. Log click for *new* results ---
+            // (Old: logUserClick(..., scanner, ...))
+            // (New: Call our own private logUserClick method)
+            logUserClick(booksToDisplay, suggestion);
+
+        } else {
+            // (Old: System.out.println)
+            // (New: Tell the View to show a message)
+            view.showMessage("⚠️ Even the suggested query returned no results.");
+        }
+    } else {
+        // (Old: System.out.println)
+        // (New: Tell the View to show a message)
+        view.showMessage("No similar titles found.");
     }
+}
 
     private void logUserClick(List<Book> booksToDisplay, String query) {
         if (booksToDisplay.isEmpty()) return;
