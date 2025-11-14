@@ -71,7 +71,7 @@ public class MainViewController {
         // Listen to every character typed
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             // Don't search if empty or very short (optional, here we do > 1 char)
-            if (newValue == null || newValue.trim().length() < 1) {
+            if (newValue == null || newValue.trim().isEmpty()) {
                 suggestionsPopup.hide();
                 return;
             }
