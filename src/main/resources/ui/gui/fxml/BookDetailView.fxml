@@ -38,7 +38,7 @@
 
                         <HBox spacing="15.0">
                             <Label fx:id="category" style="-fx-background-color: #e8f6f3; -fx-text-fill: #16a085; -fx-padding: 5 10; -fx-background-radius: 15;" text="Category: Algorithms" translateX="50.0" translateY="20.0" />
-                            <Label fx:id="rating" style="-fx-background-color: #f1c40f; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 15; -fx-font-weight: bold;" text="4.7 ★" translateX="320.0" translateY="20.0" />
+                            <Label fx:id="rating" style="-fx-background-color: #f1c40f; -fx-text-fill: white; -fx-padding: 5 10; -fx-background-radius: 15; -fx-font-weight: bold;" text="4.7 ★" translateX="210.0" translateY="20.0" />
                         </HBox>
 
                         <Separator style="-fx-padding: 10 0;" translateY="20.0" />
@@ -47,7 +47,7 @@
                         <Label fx:id="progLang" style="-fx-font-weight: bold;" text="Pseudo-code" textFill="#34495e" translateX="50.0" translateY="20.0" />
 
                         <VBox alignment="BOTTOM_LEFT" style="-fx-padding: 20 0 0 0;" VBox.vgrow="ALWAYS">
-                            <Button fx:id="readButton" onAction="#handleRead" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;" text="📖 Read Book" translateX="420.0" />
+                            <Button fx:id="readButton" onAction="#handleRead" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold; -fx-padding: 10 20; -fx-cursor: hand; -fx-background-radius: 5;" text="📖 Read Book" translateX="500.0" />
                         </VBox>
                     </VBox>
                 </HBox>
@@ -72,7 +72,7 @@
                             <Font name="System Bold" size="18.0" />
                         </font>
                     </Label>
-                    <VBox fx:id="recommendationsContainer" spacing="8.0" translateX="-300.0" translateY="50.0" />
+                    <VBox fx:id="recommendationsContainer" spacing="8.0" translateX="-300.0" translateY="30.0" />
                 </VBox>
             </VBox>
         </ScrollPane>

@@ -167,7 +167,7 @@ public class BookSearchEngine {
             return;
         }
         List<String> related = graph.recommendPopularBooks(books.get(0).getTitle(), 5,
-                reRanker.getPopularityMap(), new ArrayList<>(bookMap.values()));
+                reRanker.getPopularityMap());
         view.showRelated(related);
     }
 

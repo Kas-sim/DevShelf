@@ -70,47 +70,36 @@ public class MainViewController {
 
         // Listen to every character typed
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            // Don't search if empty or very short (optional, here we do > 1 char)
             if (newValue == null || newValue.trim().isEmpty()) {
                 suggestionsPopup.hide();
                 return;
             }
 
-            // 1. Get Predictions from Service
             List<String> suggestions = service.getAutoCompletions(newValue);
-
-            // 2. If no matches, hide popup
             if (suggestions.isEmpty()) {
                 suggestionsPopup.hide();
                 return;
             }
 
-            // 3. Populate the Popup Menu
             suggestionsPopup.getItems().clear();
             for (String suggestion : suggestions) {
                 MenuItem item = new MenuItem(suggestion);
-
-                // Add "Click" logic to the suggestion
                 item.setOnAction(e -> {
-                    // Fill the search bar with the clicked suggestion
                     searchField.setText(suggestion);
-                    // Hide the popup
                     suggestionsPopup.hide();
-                    // Trigger the search immediately
-                    handleSearch();
+                    handleSearch(); // Trigger search on click
                 });
-
                 suggestionsPopup.getItems().add(item);
             }
 
-            // 4. Show the popup below the search field
             if (!suggestionsPopup.isShowing()) {
                 suggestionsPopup.show(searchField, Side.BOTTOM, 0, 0);
             }
         });
 
-        // Hide popup if the user presses ENTER (because they are submitting)
-        searchField.setOnAction(e -> suggestionsPopup.hide());
+        // ✅ FIX: The "Enter" key fix.
+        // We do NOT add searchField.setOnAction() here anymore.
+        // The FXML (onAction="#handleSearch") already handles this.
     }
 
     @FXML
@@ -137,10 +126,18 @@ public class MainViewController {
 
     @FXML
     private void handleSearch() {
-        String query = searchField.getText();
-        if (query == null || query.trim().isEmpty()) return;
+        // ✅ FIX: Hide popup when search is triggered
+        suggestionsPopup.hide();
 
-        statusLabel.setText("Searching...");
+        String query = searchField.getText();
+        if (query == null || query.trim().isEmpty()) {
+            // Don't search for nothing, just go home
+            handleHome();
+            return;
+        }
+
+        statusLabel.setText("Searching for \"" + query + "\"...");
+        resultsContainer.getChildren().clear(); // Clear old results
 
         // 1. Get results from Backend
         SearchResponse response = service.search(query);
@@ -149,24 +146,29 @@ public class MainViewController {
         this.originalResults = response.books;
         this.currentDisplayList = new ArrayList<>(this.originalResults);
 
+        // --- ✅ FIX: NEW, ROBUST STATUS LOGIC ---
         if (this.originalResults.isEmpty()) {
-            statusLabel.setText("❌ No results found.");
-            resultsContainer.getChildren().clear();
-            categoryCombo.setItems(FXCollections.observableArrayList()); // Clear dropdown
+            if (response.isSuggestion) {
+                // Case 1: No results for "cade", but suggestion "code" *also* had no results.
+                statusLabel.setText("❌ No results found for \"" + query + "\". Also tried \"" + response.successfulQuery + "\".");
+            } else {
+                // Case 2: No results for "cade" and NO suggestion.
+                statusLabel.setText("❌ No results found for \"" + query + "\".");
+            }
+            populateCategoryDropdown(this.originalResults); // Clear dropdowns
         } else {
-            String msg = response.isSuggestion ?
-                    "💡 Showing results for: " + response.successfulQuery :
-                    "✅ Found " + originalResults.size() + " books.";
-            statusLabel.setText(msg);
+            if (response.isSuggestion) {
+                // Case 3: No results for "cade", but we *are* showing results for "code".
+                statusLabel.setText("💡 No results for \"" + query + "\". Showing results for \"" + response.successfulQuery + "\".");
+            } else {
+                // Case 4: Normal search, results found.
+                statusLabel.setText("✅ Found " + originalResults.size() + " books for \"" + query + "\".");
+            }
 
-            // 3. Setup Filters dynamically based on results
+            // Setup Filters and display
             populateCategoryDropdown(this.originalResults);
-
-            // 4. Reset dropdowns to default
             sortCombo.getSelectionModel().select("Relevance");
             categoryCombo.getSelectionModel().select("All Categories");
-
-            // 5. Display
             displayBooks(this.currentDisplayList);
         }
     }

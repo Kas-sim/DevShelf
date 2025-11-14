@@ -1,24 +1,164 @@
-/* The container of the suggestions */
-.context-menu {
+/* --- Root & Global --- */
+.root {
+    -fx-font-family: "System";
+    -fx-background-color: #F4F6F9; /* A very light grey-blue background */
+}
+
+/* --- Main View --- */
+.main-header {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+}
+
+.search-field {
+    -fx-font-size: 14px;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: #E0E0E0;
+    -fx-padding: 5px 15px;
+}
+.search-field:focused {
+    -fx-border-color: #3498db;
+}
+
+.button-primary {
+    -fx-background-color: #e67e22;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20px;
+    -fx-cursor: hand;
+}
+.button-secondary {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #34495e;
+    -fx-background-radius: 20px;
+    -fx-cursor: hand;
+}
+.button-secondary:hover {
+    -fx-background-color: #bdc3c7;
+}
+
+/* --- Autocomplete Popup --- */
+.autocomplete-popup {
     -fx-background-color: white;
-    -fx-background-radius: 0 0 5 5; /* Round bottom corners */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+    -fx-background-radius: 0 0 8px 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 5, 5);
     -fx-padding: 0;
 }
-
-/* Each suggestion row */
-.menu-item {
-    -fx-padding: 10 15 10 15;
+.autocomplete-popup .menu-item {
+    -fx-padding: 10px 15px;
     -fx-background-color: transparent;
 }
-
-/* Hover effect */
-.menu-item:focused {
-    -fx-background-color: #ecf0f1;
+.autocomplete-popup .menu-item:focused {
+    -fx-background-color: #f4f6f9;
 }
-
-/* Text inside the suggestion */
-.menu-item .label {
+.autocomplete-popup .menu-item .label {
     -fx-text-fill: #2c3e50;
     -fx-font-size: 13px;
 }
+
+/* --- ScrollPane & Sidebar --- */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 20px;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 1px 0 0;
+}
+.sidebar-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+/* --- Book Card --- */
+.book-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 2, 4);
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-cursor: hand;
+}
+.book-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 12, 0, 4, 6);
+    -fx-border-color: #3498db;
+}
+.book-card-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-text-fill: #2c3e50;
+}
+.book-card-author {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+}
+.book-card-cover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}
+.pill {
+    -fx-padding: 3px 8px;
+    -fx-background-radius: 15px;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.pill-rating { -fx-background-color: #f1c40f; -fx-text-fill: white; }
+.pill-category { -fx-background-color: #eaf2f8; -fx-text-fill: #2980b9; }
+
+/* --- Book Detail View --- */
+.detail-header {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 10px 20px;
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+.detail-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #2c3e50;
+}
+.detail-author {
+    -fx-font-size: 18px;
+    -fx-text-fill: #555;
+}
+.detail-description {
+    -fx-font-size: 14px;
+    -fx-fill: #34495e;
+    -fx-line-spacing: 4px;
+}
+.detail-section-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 10px 0;
+}
+.cta-button {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 12px 24px;
+    -fx-cursor: hand;
+    -fx-background-radius: 8px;
+}
+.cta-button:hover { -fx-background-color: #2ecc71; }
+.back-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #3498db;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-border-color: #bdc3c7;
+    -fx-border-radius: 5px;
+    -fx-cursor: hand;
+}
+.back-button:hover { -fx-background-color: #ecf0f1; }
+.rec-link { -fx-font-size: 14px; -fx-text-fill: #2980b9; }
+.rec-link:hover { -fx-underline: true; }

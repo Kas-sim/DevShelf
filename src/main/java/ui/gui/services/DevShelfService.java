@@ -104,8 +104,7 @@ public class DevShelfService {
         List<String> relatedTitles = graph.recommendPopularBooks(
                 book.getTitle(),
                 5, // Get top 5
-                reRanker.getPopularityMap(), // Re-use the map from the ReRanker
-                new ArrayList<>(bookMap.values())
+                reRanker.getPopularityMap() // Re-use the map from the ReRanker
         );
 
         // 2. Convert the list of String titles back into Book objects
