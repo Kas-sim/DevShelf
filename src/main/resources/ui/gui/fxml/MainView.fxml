@@ -35,7 +35,10 @@
                 <Button onAction="#handleClearFilter" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-cursor: hand;" text="clear" />
             </HBox>
 
-            <Label fx:id="statusLabel" minHeight="20" style="-fx-font-size: 14px; -fx-padding: 5 0 0 0;" textFill="#6d9099" />
+            <Label fx:id="statusLabel" minHeight="20" style="-fx-font-size: 14px; -fx-padding: 5 0 0 0;" textFill="#6d9099">
+            <font>
+               <Font size="10.0" />
+            </font></Label>
 
         </VBox>
     </top>
