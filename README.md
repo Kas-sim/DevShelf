@@ -1,4 +1,4 @@
-# 📘 DevShelf - Intelligent Library Search Engine
+# 📘 DevShelf - Smarter with Every Search
 
 > **"Search is not just about matching keywords; it's about understanding relevance."**
 
@@ -48,8 +48,6 @@ DevShelf follows a **Two-Part Architecture** to ensure maximum runtime performan
 |:---:|:---:|
 | ![Home Screen](path/to/screenshot1.png) | ![Detail View](path/to/screenshot2.png) |
 
-*(Note: Replace `path/to/screenshot.png` with actual image links)*
-
 ---
 
 ## 📥 Installation & Usage
@@ -57,7 +55,7 @@ DevShelf follows a **Two-Part Architecture** to ensure maximum runtime performan
 **No Java Installation Required.** DevShelf is deployed as a portable application.
 
 1.  Go to the [**Releases Page**](../../releases).
-2.  Download **`DevShelf_Portable_v1.0.zip`**.
+2.  Download **`DevShelf.zip`**.
 3.  Extract the zip file.
 4.  Open the folder and run **`DevShelf.exe`**.
 
@@ -96,4 +94,4 @@ If you want to modify the code or build it yourself:
 
 ---
 
-**Developed by Kassim** *Built to explore Advanced Data Structures & Algorithms.*
+**Developed by Kas-sim** *Built to explore Advanced Data Structures & Algorithms.*
