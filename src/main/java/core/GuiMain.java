@@ -75,7 +75,7 @@ public class GuiMain extends Application {
         controller.setService(service);
 
         Scene scene = new Scene(root);
-        Image logo = new Image("assets/images/DevShelf6.jpg");
+        Image logo = new Image("assets/images/DevShelf_Logo.jpg");
         stage.getIcons().add(logo);
         stage.setTitle("DevShelf");
         stage.setScene(scene);
