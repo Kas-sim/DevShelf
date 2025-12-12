@@ -19,6 +19,7 @@ import ui.gui.controllers.MainViewController;
 import ui.gui.services.DevShelfService;
 import utils.StopWordLoader;
 import utils.TextProcessor;
+import utils.UpdateService;
 
 import java.io.File;
 import java.util.*;
@@ -76,9 +77,13 @@ public class GuiMain extends Application {
         Scene scene = new Scene(root);
         Image logo = new Image("assets/images/DevShelf6.jpg");
         stage.getIcons().add(logo);
-        stage.setTitle("DevShelf - Library Search Engine");
+        stage.setTitle("DevShelf");
         stage.setScene(scene);
         stage.show();
+
+        new Thread(() -> {
+        new UpdateService().checkForUpdates();
+        }).start();
 
         System.out.println("✅ GUI Started successfully.");
     }
