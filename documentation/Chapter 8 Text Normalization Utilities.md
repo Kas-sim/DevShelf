@@ -1,224 +1,409 @@
+# Chapter 8: User Behavior Analytics
 
-Welcome back to DevShelf! In our last chapter, [Search Enhancement & Recommendations](07_search_enhancement___recommendations_.md), we saw how DevShelf becomes a "savvy librarian," offering intelligent suggestions and smart recommendations to improve your search experience. But all that intelligence relies on a fundamental, behind-the-scenes hero: making sure all text is clean and consistent.
+Welcome back, digital librarian! In our last chapter, [Intelligent Search Enhancements](07_intelligent_search_enhancements_.md), we made DevShelf smarter by adding helpful suggestions, boosting important books, and providing personalized recommendations. We learned that for these enhancements, DevShelf needs to know things like a book's "popularity." But where does this popularity information come from?
 
-Imagine asking a librarian for "books on running," and they can only find books that specifically contain the word "running." They might miss great books that use "ran," "runs," or "jogging"! Or what if you typed "Python books," but a book's description said "PYTHON programming guide"? Without some clever pre-processing, these wouldn't match perfectly.
+This is where **User Behavior Analytics** comes in. Think of it as DevShelf's "hidden assistant." This assistant quietly watches how users interact with the application, learning which books are truly trending or frequently clicked. This feedback makes DevShelf smarter and more helpful over time.
 
-This is the problem that **Text Normalization Utilities** solve. It's like having a meticulous editor who pre-processes *all* text in the library – every book description and every search query you type – to make it uniform and easy for the search engine to understand.
+### What Problem Does Our "Hidden Assistant" Solve?
 
-#### The Problem Our Utilities Solve
+Imagine DevShelf only relied on static information like book ratings or how many times a keyword appears. It would be good, but it wouldn't be truly dynamic. What if:
+*   A new book is released, and everyone starts clicking on it, even if it doesn't have many ratings yet?
+*   An older book with high ratings suddenly becomes less relevant to current trends?
 
-Text comes in all shapes and sizes. Sometimes it's all uppercase, sometimes it has punctuation, and often it contains very common words that don't help us find specific books. If DevShelf tries to match "Python" (capital P) from your query with "python" (lowercase p) in a book description, it won't work perfectly unless both are standardized.
+Without tracking user actions, DevShelf would miss these important real-world signals.
 
-**Our central use case:** You search for "How to write **Clean Code** in **Java**". DevShelf needs to understand that you're looking for books on "clean," "code," and "java," regardless of capitalization, common words like "to" or "how," or even if the book says "java programs" instead of just "java." This utility ensures your query matches the book's content accurately.
+The problem User Behavior Analytics solves is this: **How can DevShelf adapt and learn from real user actions to prioritize books that are currently popular or trending, rather than just relying on static data?**
 
-### The Text Processor: Our Digital Editor
+**Our central use case:** A user searches for "Java," sees a list of books, and then clicks on "Effective Java." DevShelf needs to **record this click**, and later, use these click records to figure out which "Java" books (or any books) are currently the most popular, influencing future search results and recommendations.
 
-The main tool for text normalization in DevShelf is the `TextProcessor`. Think of it as our digital editor. Its job is to take any raw text (from book descriptions, titles, or your search query) and put it through a series of cleaning steps.
+Let's dive into how DevShelf's hidden assistant makes this possible!
 
-When you give the `TextProcessor` some text, it does four main things:
+### Key Concepts of User Behavior Analytics
 
-1.  **Tokenization**: Breaks down a sentence into individual "words" or "tokens."
-2.  **Lowercasing**: Converts all text to lowercase.
-3.  **Stop Word Removal**: Filters out common, uninformative words.
-4.  **Stemming**: Reduces words to their basic "root" form.
+User Behavior Analytics in DevShelf involves two main steps:
 
-#### How `TextProcessor` is Used
+1.  **Real-time Tracking of Clicks (The "Logger"):** DevShelf constantly records every time a user clicks on a book, saving these actions as simple log entries. This happens as you use the application.
+2.  **Offline Analysis of Logs (The "Analyst"):** Periodically, a separate program analyzes all these collected log entries. It counts up all the clicks for each book and calculates a "popularity score" based on how frequently each book is clicked.
+3.  **Feedback Loop (The "Enhancer"):** These calculated popularity scores are then fed back into DevShelf. Features like the [ReRanker](07_intelligent_search_enhancements_.md) and [Graph](07_intelligent_search_enhancements_.md) use these scores to boost trending books in search results and prioritize them in recommendations.
 
-The `TextProcessor` is a foundational utility. It's used by critical components like the `IndexBuilder` (from [Search Index Management](04_search_index_management_.md)) to process book content *before* indexing, and by the `QueryProcessor` (from [Core Search Engine](05_core_search_engine_.md)) to clean up your search queries.
+### Part 1: Tracking User Clicks (The "Logger")
 
-Let's see a simple example of how you'd use it:
+The first step is to record what users are doing. DevShelf has a special service dedicated to logging every time you click on a book.
 
+#### The `LogEntry`: A Single Click Record
+
+Before saving a click, DevShelf creates a `LogEntry` object. This is a small digital record, like a single line in our assistant's notebook, that captures the essential details of a user's interaction.
+
+**`src/main/java/domain/LogEntry.java` (Simplified)**
 ```java
-// Assuming 'textProcessor' is ready to use
-String rawText = "The best BOOKS for running CODE in Python!";
-List<String> cleanedWords = textProcessor.process(rawText);
-System.out.println(cleanedWords);
+package domain;
+
+import lombok.Getter; // Automatically creates 'get' methods
+import java.time.Instant; // To record the exact time
+
+@Getter // This annotation from Lombok creates public 'get' methods for each field
+public class LogEntry {
+    private String query;         // What the user searched for (e.g., "java")
+    private int clickedDocId;     // The unique ID of the book they clicked (e.g., 89)
+    private String timestamp;     // When the click happened (e.g., "2025-11-07T...")
+
+    // This special method helps create a new LogEntry
+    public LogEntry(String query, int clickedDocId) {
+        this.query = query;
+        this.clickedDocId = clickedDocId;
+        this.timestamp = Instant.now().toString(); // Records the current time automatically
+    }
+}
 ```
+Each `LogEntry` clearly captures the essential details of a user's interaction with a book.
 
-**Output:**
-```
-[best, book, run, code, python]
-```
+#### The `LoggingService`: DevShelf's Notebook
 
-As you can see, the original sentence `"The best BOOKS for running CODE in Python!"` has been transformed into a concise list of important, standardized words: `["best", "book", "run", "code", "python"]`. "The," "for," "in" are gone (stop words), "BOOKS" became "book" (lowercasing, stemming), and "running" became "run" (stemming).
+The `LoggingService` is like the hidden assistant's notebook. Whenever you click a book in the search results (or open its details), the application tells the `LoggingService` to make an entry. All these notes are saved into a simple text file named `logs.json`.
 
-### Under the Hood: The `TextProcessor`'s Workflow
-
-Let's visualize the `TextProcessor` at work when it cleans a piece of text:
+**How a Click Gets Logged:**
+When you click a book (for instance, to see its full details in the GUI), here's how it flows:
 
 ```mermaid
 sequenceDiagram
-    participant Raw Text
-    participant TextProcessor
-    participant StopWordLoader
-    participant Stemmer
-    participant Cleaned Words
+    participant You
+    participant GUI Controller
+    participant DevShelfService
+    participant LoggingService
+    participant logs.json file
 
-    Raw Text->>TextProcessor: "Process 'The best BOOKS for running CODE in Python!'"
-    TextProcessor->>TextProcessor: Tokenize & Lowercase
-    Note over TextProcessor: "the", "best", "books", "for", "running", "code", "in", "python"
-    TextProcessor->>StopWordLoader: "Are 'the', 'for', 'in' stopwords?"
-    StopWordLoader-->>TextProcessor: "Yes, they are."
-    TextProcessor->>TextProcessor: Remove stopwords
-    Note over TextProcessor: "best", "books", "running", "code", "python"
-    TextProcessor->>Stemmer: "Stem 'books', 'running'"
-    Stemmer-->>TextProcessor: "book", "run"
-    TextProcessor->>TextProcessor: Collect stemmed words
-    TextProcessor-->>Cleaned Words: ["best", "book", "run", "code", "python"]
+    You->>GUI Controller: Click on "Effective Java" book card
+    GUI Controller->>DevShelfService: logClick("Java", 89)
+    DevShelfService->>LoggingService: logClick("Java", 89)
+    Note over LoggingService: Creates a LogEntry object and converts it to JSON text
+    LoggingService->>logs.json file: Append {"query":"Java", "clickedDocId":89, ...}
+    logs.json file-->>LoggingService: (Data written)
+    LoggingService-->>DevShelfService: (Confirmation)
+    DevShelfService-->>GUI Controller: (Confirmation)
+    GUI Controller-->>You: Show "Effective Java" details
 ```
+The GUI Controller (which we saw in [User Interface (UI) Presentation](01_user_interface__ui__presentation_.md)) detects your click, tells `DevShelfService` (the GUI's main logic), which then tells the `LoggingService` to record it.
 
-#### The `TextProcessor` Class: The Orchestrator
-
-The `TextProcessor` class ties together all the individual cleaning steps. It takes a `Set` of stopwords (common words to ignore) and uses a `Stemmer` (a tool to find root words) when it's created.
-
-**`src/main/java/utils/TextProcessor.java` (Simplified Constructor)**
+**`src/main/java/utils/LoggingService.java` (Simplified `logClick` method)**
 ```java
 package utils;
 
-import org.tartarus.snowball.ext.englishStemmer;
-import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper; // Tool to convert to JSON
+import domain.LogEntry;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
-public class TextProcessor {
+public class LoggingService {
+    private final String logFilePath;
+    private final ObjectMapper mapper; // Our JSON tool
 
-   private final Set<String> stopWords;           // Our list of uninformative words
-   private final englishStemmer stemmer = new englishStemmer(); // Our root-word finder
-
-   // When TextProcessor is created, it needs the list of stop words
-   public TextProcessor(Set<String> stopWords) {
-       this.stopWords = stopWords;
-   }
-
-   // ... process method ...
-}
-```
-The constructor makes sure our `TextProcessor` is equipped with the necessary tools (`stopWords` and `stemmer`) to do its job effectively.
-
-#### The `process` Method: Step-by-Step Cleaning
-
-This is the core method that performs all the normalization steps.
-
-**`src/main/java/utils/TextProcessor.java` (Simplified `process` method)**
-```java
-// Inside TextProcessor class
-public List<String> process(String text) {
-
-    if (text == null || text.isBlank()) {
-        return Collections.emptyList(); // Handle empty or null text
+    public LoggingService(String logFilePath) {
+        this.logFilePath = logFilePath;
+        this.mapper = new ObjectMapper();
     }
 
-    // 1. Tokenization and Lowercasing
-    // Splits text by anything that's not a letter/number/apostrophe
-    String[] rawTokens = text.toLowerCase().split("[^a-zA-Z0-9']+");
-    List<String> tokens = Arrays.asList(rawTokens);
+    public void logClick(String query, int clickedDocId) {
+        LogEntry entry = new LogEntry(query, clickedDocId); // 1. Create the LogEntry
 
-    // 2. Stop Word Removal
-    List<String> filteredTokens = new ArrayList<>();
-    for(String token : tokens) {
-        if (token.isEmpty()) continue; // Skip empty strings from splitting
-        if(!stopWords.contains(token)) { // If it's NOT a stop word
-            filteredTokens.add(token);
+        String jsonLogLine;
+        try {
+            jsonLogLine = mapper.writeValueAsString(entry); // 2. Convert to JSON text
+        } catch (IOException e) {
+            System.err.println("Failed to convert LogEntry to JSON.");
+            return;
+        }
+
+        // 3. Write JSON text to the logs.json file (append to end)
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFilePath, true))) {
+            writer.write(jsonLogLine);
+            writer.newLine(); // Add a new line for the next entry
+            writer.flush();   // Make sure it's written to disk immediately
+        } catch (IOException e) {
+            System.err.println("Failed to write log line to file.");
+            e.printStackTrace();
         }
     }
-
-    // 3. Stemming
-    List<String> stemmedTokens = new ArrayList<>();
-    for (String token : filteredTokens) {
-        stemmer.setCurrent(token); // Give the stemmer the word
-        stemmer.stem();            // Ask it to find the root
-        stemmedTokens.add(stemmer.getCurrent()); // Get the root word
-    }
-
-    return stemmedTokens;
 }
 ```
-Let's break down these steps:
+The `logClick` method creates a `LogEntry`, converts it into a JSON string, and then appends this string as a new line to the `logs.json` file. This means `logs.json` grows larger with every user click!
 
-1.  **Tokenization & Lowercasing**:
-    *   `text.toLowerCase()`: Converts the entire text to lowercase. "BOOKS" becomes "books", "Python" becomes "python".
-    *   `.split("[^a-zA-Z0-9']+")`: This is a "regular expression" that tells Java to break the sentence into words wherever it finds characters that are *not* letters (a-z, A-Z), numbers (0-9), or apostrophes ('). So, "running CODE!" becomes ["running", "code"].
+#### What the `logs.json` File Looks Like
+`logs.json` is a file where each line is a separate click event:
 
-2.  **Stop Word Removal**:
-    *   It loops through all the `tokens` (words) found in the previous step.
-    *   `!stopWords.contains(token)`: It checks if the current word is present in our `stopWords` list. If it's *not* a stop word (meaning it's an important word), it's added to `filteredTokens`.
-    *   This is how words like "the," "for," "is" are removed, as they generally don't help in understanding the core topic.
-
-3.  **Stemming**:
-    *   It takes each word from `filteredTokens` and hands it to our `stemmer`.
-    *   `stemmer.setCurrent(token)`: Loads the word into the stemmer.
-    *   `stemmer.stem()`: This is the magic! The stemmer uses linguistic rules to find the root form. "running" becomes "run," "developers" becomes "develop," "algorithms" becomes "algorithm."
-    *   `stemmedTokens.add(stemmer.getCurrent())`: The root word is then added to our final list.
-
-#### Loading Stop Words: `StopWordLoader`
-
-But where do the `stopWords` come from? DevShelf has a special list of common English words in a file called `stopword.txt`. The `StopWordLoader`'s job is to read this file and provide the `TextProcessor` with the set of words to ignore.
-
-**`src/main/resources/data/stopword.txt` (Snippet)**
+**`src/main/resources/logs/logs.json` (Snippet)**
+```json
+{"query":"clean","clickedDocId":58,"timestamp":"2025-11-07T06:55:52.677729400Z"}
+{"query":"clean","clickedDocId":58,"timestamp":"2025-11-07T06:55:56.033080Z"}
+{"query":"develop","clickedDocId":108,"timestamp":"2025-11-07T18:59:05.735673500Z"}
+{"query":"The Pragmatic Programmer","clickedDocId":2,"timestamp":"2025-11-14T14:09:05.605164500Z"}
+{"query":"The Pragmatic Programmer","clickedDocId":2,"timestamp":"2025-11-14T14:09:08.471192900Z"}
 ```
-"a","an","the","and","or","but","if","then","else","on","in","at","by","for","with","about","against",
-"between","into","through","during","before","after","above","below","to","from","up","down","of","is",
-"are","was","were","be","been","being","as","that","this","these","those","it","its","I","you","he","she","they"
-```
-Each of these words will be considered "unimportant" by our `TextProcessor`.
+You can see that book `ID 58` was clicked twice after a "clean" search, and book `ID 2` ("The Pragmatic Programmer") was clicked several times. This raw data is exactly what our next component needs!
 
-**`src/main/java/utils/StopWordLoader.java` (Simplified `loadStopWords` method)**
+### Part 2: Understanding Popularity (The "Analyst")
+
+Gathering raw click data is useful, but we need to *process* it to get meaningful insights. This is where the analytics part comes in.
+
+#### The `LogAnalyzerMain`: Our Offline Popularity Calculator
+
+Similar to `IndexerMain` (which built our search index in [Offline Search Indexing](06_offline_search_indexing_.md)), `LogAnalyzerMain` is another **offline tool**. This means you run it separately, usually when the main DevShelf application isn't running, to process the accumulated `logs.json` file.
+
+Its job is to:
+1.  Read every `LogEntry` from `logs.json`.
+2.  Count how many times each unique book (`clickedDocId`) was clicked.
+3.  Calculate a "popularity score" for each book based on its click count.
+4.  Save these popularity scores into a new file: `popularity.json`.
+
+This `popularity.json` file will then be loaded by the main DevShelf application (just like `index_data.json`) to influence search results and recommendations.
+
+**How to Run the `LogAnalyzerMain`:**
+You would run `LogAnalyzerMain` directly from your development environment. It doesn't have a visual interface; it just prints messages as it processes the logs.
+
+**`src/main/java/core/LogAnalyzerMain.java` (Simplified `analyze` method)**
 ```java
-package utils;
+package core;
 
+import com.fasterxml.jackson.databind.ObjectMapper; // JSON helper
+import domain.LogEntry;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import utils.StorageUtils; // Helper to find where files are saved
 
-public class StopWordLoader {
+public class LogAnalyzerMain {
+    public static void main(String[] args)  {
+        analyze(); // Call the method to start analysis
+    }
 
-    // This method can be called directly without creating an object
-    public static Set<String> loadStopWords(String filePath) {
-       Set<String> stopWords = new HashSet<>();
-       try(BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-           String line;
-           while( (line = reader.readLine()) != null ) {
-               String word = line.trim().toLowerCase();
-               if(!word.isEmpty()) {
-                   stopWords.add(word); // Add each word from the file to our set
-               }
-           }
-       } catch (IOException e) {
-           System.err.println("Error loading stopwords file: " + e.getMessage());
-       }
-       return stopWords;
+    public static void analyze() {
+        System.out.println("--- Starting Log Analyzer ---");
+        String logsPath = StorageUtils.getAppDataDir() + File.separator + "logs.json";
+        String popularityOutPath = StorageUtils.getAppDataDir() + File.separator + "popularity.json";
+
+        ObjectMapper mapper = new ObjectMapper(); // Our JSON tool
+        Map<Integer, Integer> clickCounts = new HashMap<>(); // Store: <BookID, ClickCount>
+
+        File logFile = new File(logsPath);
+        if (!logFile.exists()) {
+            System.out.println("❌ No logs found at " + logsPath);
+            System.out.println("Run DevShelf GUI and click some books first to generate logs!");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+                LogEntry entry = mapper.readValue(line, LogEntry.class); // Read each click entry
+                int docId = entry.getClickedDocId();
+                clickCounts.put(docId, clickCounts.getOrDefault(docId, 0) + 1); // Count clicks for this book
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading log file: " + e.getMessage());
+            return;
+        }
+
+        // --- Calculate raw popularity scores (using a logarithm to soften very high counts) ---
+        Map<Integer, Double> popularityScores = new HashMap<>();
+        double maxScore = 0.0;
+        for (Integer docId : clickCounts.keySet()) {
+            double score = Math.log10(1 + clickCounts.get(docId)); // E.g., 9 clicks -> log10(10) = 1.0
+            popularityScores.put(docId, score);
+            if (score > maxScore) maxScore = score; // Find the highest score for normalization
+        }
+
+        // --- Normalize all scores between 0 and 1 (most popular book gets 1.0) ---
+        if (maxScore > 0) {
+            for (Integer docId : popularityScores.keySet()) {
+                double normalizedScore = popularityScores.get(docId) / maxScore;
+                popularityScores.put(docId, normalizedScore);
+            }
+        }
+
+        // --- Save the final popularity map to popularity.json ---
+        try {
+            mapper.writerWithDefaultPrettyPrinter()
+                  .writeValue(new File(popularityOutPath), popularityScores);
+            System.out.println("--- Log Analyzer Finished ---");
+        } catch (IOException e) {
+            System.err.println("Error writing popularity file: " + e.getMessage());
+        }
     }
 }
 ```
-The `loadStopWords` method simply reads each line from the `stopword.txt` file, cleans it up a bit (removes extra spaces, makes it lowercase), and adds it to a `HashSet`. A `HashSet` is perfect for fast "contains" checks later.
+This process:
+1.  Reads each line from `logs.json`.
+2.  Converts the JSON line back into a `LogEntry` object.
+3.  Increments a counter for the `clickedDocId` (book ID).
+4.  After reading all logs, it calculates a raw score using `Math.log10(1 + clicks)`. This "logarithm" helps to smooth out the scores; for example, 100 clicks isn't *100 times* better than 1 click, but still significantly better. This prevents super popular books from totally dominating everything else.
+5.  Finally, it normalizes these scores so they all fall between `0.0` and `1.0`. The most popular book will have a score of `1.0`, making them easy to use in calculations.
+6.  The result is then saved to `popularity.json`.
 
-#### The `Stemmer` Class: Finding Root Words
+#### What the `popularity.json` File Looks Like
+`popularity.json` contains a map where each book ID is linked to its calculated popularity score:
 
-The `Stemmer` class (`src/main/java/utils/Stemmer.java`) in DevShelf acts as a convenient wrapper for an existing powerful library called "Snowball Stemmer." This library knows the complex rules of English grammar to reduce words to their base form.
+**`src/main/resources/logs/popularity.json` (Snippet)**
+```json
+{
+  "194" : 0.227670248696953,
+  "2" : 1.0,           // This is the most popular book (score 1.0)
+  "3" : 0.3608488067145302,
+  "6" : 0.5286339468194481,
+  "135" : 0.7876096569652562,
+  "72" : 0.5286339468194481,
+  "9" : 0.5778851182977677,
+  "58" : 0.8668214419824227, // Second most popular book
+  // ... many more books and their scores ...
+}
+```
+Now, DevShelf has a clear, up-to-date understanding of which books are most frequently clicked by its users.
 
-For instance, if you give it "programming," it will return "program." If you give it "configured," it will return "configur." This ensures that a search for "program" will match books containing "programming," "programs," "programmer," or "programmed."
+### Part 3: Using Popularity to Improve DevShelf (The "Enhancer")
 
-### Why Text Normalization is So Important
+The collected and analyzed popularity scores are not just for show! They are directly fed back into DevShelf to make your experience better.
 
-Text normalization is a silent hero in our search engine. Without it, DevShelf's search capabilities would be severely limited:
+#### 1. Boosting Search Results: The `ReRanker`
+In [Intelligent Search Enhancements](07_intelligent_search_enhancements_.md), we learned that the `ReRanker` sorts initial search results by combining factors like keyword relevance, ratings, and *popularity*. The `ReRanker` loads the `popularity.json` file when DevShelf starts.
 
-| Feature                   | WITHOUT Text Normalization                                   | WITH Text Normalization                                                |
-| :------------------------ | :----------------------------------------------------------- | :--------------------------------------------------------------------- |
-| **Search Accuracy**       | Misses matches due to capitalization, punctuation, or different word endings. | Finds more relevant matches by standardizing all text.                 |
-| **Search Efficiency**     | The index (from [Search Index Management](04_search_index_management_.md)) would be much larger (e.g., storing "Run", "Runs", "Running" as separate terms). | Smaller index (only stores "run"), leading to faster lookups.         |
-| **User Experience**       | Frustrating, as users expect "Java" to match "java" and "develop" to match "developer". | Intuitive, forgiving search that "understands" what the user means. |
-| **Relevance Scoring**     | Scores might be skewed by common words or inconsistent spellings. | Clearer, more precise relevance scores.                                |
+**`src/main/java/features/search/ReRanker.java` (Simplified Constructor)**
+```java
+package features.search;
 
-This table clearly shows why this seemingly simple step is absolutely crucial for DevShelf to function as an intelligent and user-friendly digital library.
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import domain.Book;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ReRanker {
+    private final Map<Integer, Book> bookMap;
+    private final Map<Integer, Double> popularityMap; // This will hold our popularity scores!
+
+    // Weights to decide how much each factor contributes to the final score
+    private static final double W_TFIDF = 0.7;
+    private static final double W_POPULARITY = 0.20; // How popular the book is!
+    private static final double W_RATING = 0.10;
+
+    public ReRanker(Map<Integer, Book> bookMap, String popularityFilePath) {
+        this.bookMap = bookMap;
+        this.popularityMap = loadPopularity(popularityFilePath); // Load the popularity scores!
+    }
+
+    private Map<Integer, Double> loadPopularity(String path) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            // This reads the popularity.json file into our map
+            return mapper.readValue(new File(path), new TypeReference<Map<Integer, Double>>() {});
+        } catch (IOException e) {
+            System.err.println("Error loading popularity file: " + e.getMessage());
+            return new HashMap<>(); // Return empty if loading fails
+        }
+    }
+    // ... reRank method (see snippet below) ...
+}
+```
+When `ReRanker.reRank` is called, it combines the initial search score (`tfIdfScore`), the book's rating, and now also the `popularityScore` to calculate a `finalScore`:
+
+**`src/main/java/features/search/ReRanker.java` (Snippet from `reRank` method)**
+```java
+// Inside ReRanker class
+public List<SearchResult> reRank(List<SearchResult> tfIdfResults, String query) {
+    List<SearchResult> reRankedResults = new ArrayList<>();
+
+    for (SearchResult oldResult : tfIdfResults) {
+        int docId = oldResult.getDocId();
+        Book book = bookMap.get(docId); // Get the book details (from Chapter 2)
+
+        double tfIdfScore = oldResult.getScore();
+        double normalizedRating = book.getRating() / 5.0; // Scale rating from 0 to 1
+        double popularityScore = popularityMap.getOrDefault(docId, 0.0); // Get our popularity score!
+
+        // --- The MASTER FORMULA now includes popularity! ---
+        double finalScore = (W_TFIDF * tfIdfScore) +
+                            (W_RATING * normalizedRating) +
+                            (W_POPULARITY * popularityScore); // Add popularity weight
+
+        // ... (title boosts and other re-ranking logic from Chapter 7) ...
+
+        reRankedResults.add(new SearchResult(docId, finalScore));
+    }
+    Collections.sort(reRankedResults); // Sort by this new finalScore
+    return reRankedResults;
+}
+```
+By adding `W_POPULARITY * popularityScore` to the `finalScore`, DevShelf now ensures that books that are currently trending (have higher popularity scores) appear higher in the search results, even if their initial keyword match wasn't the absolute highest.
+
+#### 2. Providing Trending Recommendations: The `Graph`
+The `Graph` component (from [Intelligent Search Enhancements](07_intelligent_search_enhancements_.md)) also uses this popularity data to provide smarter recommendations. When suggesting books related to a specific title, it can now prioritize those related books that are also highly popular.
+
+**`src/main/java/features/recommendation/Graph.java` (Snippet from `recommendPopularBooks` method)**
+```java
+package features.recommendation;
+
+import domain.Book;
+import java.util.*;
+
+public class Graph {
+
+    // ... graph building logic (from Chapter 7) ...
+
+    public List<String> recommendPopularBooks(String bookTitle, int limit, Map<Integer, Double> popularityMap) {
+        String key = normalize(bookTitle); // Clean the input book title
+        Map<String, Double> relatedBooks = adjList.getOrDefault(key, Collections.emptyMap());
+        List<String> result = new ArrayList<>(relatedBooks.keySet());
+
+        final double ALPHA = 0.7; // How much emphasis on relevance vs. popularity (70% relevance, 30% popularity)
+
+        // Sort the related books based on a combined score
+        result.sort((a, b) -> {
+            double relA = relatedBooks.getOrDefault(a, 0.0); // Relevance score for book A
+            double relB = relatedBooks.getOrDefault(b, 0.0); // Relevance score for book B
+
+            // Get popularity scores from the map
+            double popA = popularityMap != null
+                    ? popularityMap.getOrDefault(titleToId.getOrDefault(a, -1), 0.0)
+                    : 0.0;
+            double popB = popularityMap != null
+                    ? popularityMap.getOrDefault(titleToId.getOrDefault(b, -1), 0.0)
+                    : 0.0;
+
+            // Combine relevance and popularity to get a final recommendation score
+            double scoreA = ALPHA * relA + (1 - ALPHA) * popA;
+            double scoreB = ALPHA * relB + (1 - ALPHA) * popB;
+
+            return Double.compare(scoreB, scoreA); // Sort from highest score to lowest
+        });
+
+        return result.subList(0, Math.min(limit, result.size())); // Return top recommendations
+    }
+}
+```
+Here, the `recommendPopularBooks` method takes the `popularityMap` as an input. It calculates a `scoreA` and `scoreB` for two books `A` and `B` by blending their intrinsic "relevance" (how strongly they are related to the original book) with their `popularity` score. This means that if two books are equally related, the more popular one will be recommended first!
+
+### Summary of User Behavior Analytics Components
+
+| Component          | Role                                                      | When it Runs                                | Data Processed/Produced                 | Used by                                |
+| :----------------- | :-------------------------------------------------------- | :------------------------------------------ | :-------------------------------------- | :------------------------------------- |
+| `LoggingService`   | Records user clicks on books.                             | **Real-time** (during application use)      | `LogEntry` objects -> `logs.json`       | `DevShelfService` (called by UI)       |
+| `LogAnalyzerMain`  | Processes raw click logs to calculate popularity scores.  | **Offline** (run separately, e.g., nightly) | `logs.json` -> `popularity.json`        | No direct user, prepares data for others |
+| `LogEntry`         | A single data record of a user's click.                   | Created by `LoggingService`                 | Stores `query`, `clickedDocId`, `timestamp` | `LoggingService`, `LogAnalyzerMain`    |
+| `popularity.json`  | Stores calculated popularity scores for each book.        | Output of `LogAnalyzerMain`                 | Map of `BookID` to `PopularityScore`    | `ReRanker`, `Graph`                    |
 
 ### Conclusion
 
-In this chapter, we explored **Text Normalization Utilities**, the essential behind-the-scenes processes that make all our text clean, consistent, and easy for the search engine to understand. We learned that:
-*   The `TextProcessor` is our digital editor, performing **tokenization, lowercasing, stop word removal, and stemming** on all text inputs.
-*   It relies on a `Set` of `stopWords` loaded by the `StopWordLoader` from `stopword.txt` to filter out uninformative words.
-*   It uses a `Stemmer` to reduce words to their root form, allowing searches to match variations of words.
-*   This consistency is vital for the search engine (the [Core Search Engine](05_core_search_engine_.md)) to accurately match queries with book content and generate relevant results.
+In this chapter, we explored **User Behavior Analytics**, DevShelf's hidden assistant that helps it learn from your actions. We discovered:
+*   The `LoggingService` actively records your clicks on books, saving them as `LogEntry` objects in the `logs.json` file.
+*   The `LogAnalyzerMain` is an offline tool that processes these raw `logs.json` files, counting clicks and calculating a normalized popularity score for each book, which is then saved to `popularity.json`.
+*   These crucial `popularity.json` scores are then used by other parts of DevShelf, like the `ReRanker` to boost trending books in search results and the `Graph` to provide popularity-aware recommendations.
 
-By ensuring all text is normalized, DevShelf provides a much more accurate, efficient, and user-friendly search experience, forming the bedrock for all its intelligent features.
+This dynamic feedback loop ensures that DevShelf isn't just a static library but an intelligent system that adapts to what users are actually interested in, making your next search even more relevant and exciting!
 
-This marks the end of our tutorial chapters for DevShelfGUI. We hope you've enjoyed this journey through the application's architecture and learned a lot about how a modern search engine works!
+This concludes our journey through the DevShelf project! We've explored every major component, from the user interface and core data models to powerful search engines, text processing, intelligent enhancements, and how DevShelf learns from user behavior. You now have a comprehensive understanding of how this digital library works its magic!
+
+---
