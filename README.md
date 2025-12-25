@@ -16,7 +16,7 @@
 <br>
 
 <p align="center">
-  <a href="https://github.com/Kas-sim/DevShelf/releases/latest">
+  <a href="https://github.com/Kas-sim/DevShelf/releases/latest/download/DevShelf-Setup.exe">
     <img
       src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-0A66C2?style=for-the-badge&logo=windows&logoColor=white"
       alt="Download DevShelf for Windows"
