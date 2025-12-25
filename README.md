@@ -1,97 +1,174 @@
-# 📘 DevShelf - Smarter with Every Search
+# 📚 DevShelf
+## Search Engine that Gets Smarter with Every Search
 
-> **"Search is not just about matching keywords; it's about understanding relevance."**
+![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Build Status](https://img.shields.io/badge/build-passing-success?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-blue?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-DevShelf is a high-performance, offline-first desktop search engine for programming books. Unlike standard database queries, DevShelf utilizes **Information Retrieval (IR)** algorithms to rank books based on **Text Relevance** (TF-IDF), **Static Quality** (Ratings), and **Dynamic Popularity** (User Behavior).
+---
 
-Built with **Java 17** and **JavaFX**, featuring a strictly decoupled **MVC Architecture**.
+<p align="center">
+  <strong>Try DevShelf locally — no cloud dependency required.</strong><br>
+  <em>Offline-first • Fast • Built from first principles</em>
+</p>
+
+<br>
+
+<p align="center">
+  <a href="https://github.com/Kas-sim/DevShelf/releases/latest">
+    <img
+      src="https://img.shields.io/badge/⬇%20Download%20for%20Windows-0A66C2?style=for-the-badge&logo=windows&logoColor=white"
+      alt="Download DevShelf for Windows"
+      height="42"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    Linux users: download the latest release from the same page.
+  </sub>
+</p>
+
+---
+
+## 📖 Overview
+
+**DevShelf** is a high-performance vertical search engine for **Computer Science textbooks**.
+
+Unlike traditional library software, DevShelf is built from **first principles** using a custom **Positional Inverted Index**, enabling **O(1)** query-time lookups without relying on Lucene, Elasticsearch, or external IR frameworks.
+
+The system is designed for:
+
+- Speed
+- Precision
+- Offline-first usage
+- Cloud-synced freshness
+
+---
+
+## ⚡ Engineering Philosophy
+
+DevShelf addresses the **Information Retrieval (IR)** problem at a local scale with production-grade constraints.
+
+### Design Goals
+
+1. **Fast**  
+   Sub-millisecond query latency using optimized data structures.
+
+2. **Smart**  
+   Ranking goes beyond keyword matching by combining:
+   - TF-IDF
+   - Vector Space Models
+   - Behavioral analytics
+
+3. **Distributed by Design**  
+   Index and metadata are fetched from a lightweight serverless source (GitHub Raw), allowing users to receive updated data without application updates.
+
+---
+
+## 🏗 System Architecture
+
+DevShelf follows **Domain-Driven Design (DDD)** principles.
+
+The system is divided into two major layers:
+
+### Offline Indexing Layer
+- Parses `books.json`
+- Builds the inverted index
+- Analyzes interaction logs
+- Produces popularity vectors
+
+### Online Query Engine
+- Accepts user queries via CLI or JavaFX GUI
+- Processes queries (tokenization, fuzzy matching, autocomplete)
+- Ranks results using hybrid scoring
+- Returns sorted documents
+
+---
+
+## 🧠 Ranking Model
+
+Search relevance is computed using a weighted hybrid score:
+
+Score(d, q) =
+0.6 × TF-IDF  
+0.2 × Popularity  
+0.2 × Rating  
+
+### Ranking Signals
+
+| Signal      | Description |
+|------------|-------------|
+| TF-IDF     | Statistical importance of query terms |
+| Popularity | Derived from offline click and usage logs |
+| Rating     | Quality signals embedded in the dataset |
 
 ---
 
 ## 🚀 Key Features
 
-### 🧠 Intelligent Ranking ("The Master Formula")
-DevShelf doesn't just find books; it ranks them using a weighted algorithm:
-* **Vector Space Model:** Uses **TF-IDF** and **Cosine Similarity** to measure how relevant a book is to your query.
-* **Learning to Rank:** An integrated Feedback Loop (`LogAnalyzer`) tracks user clicks to boost popular books over time.
-* **Exact Match Boosting:** Intelligently prioritizes exact title matches.
+### Core Search Engine
 
-### ⚡ Performance
-* **O(1) Search Speed:** Utilizes a pre-compiled **Inverted Index** to deliver sub-millisecond results.
-* **Real-Time Autocomplete:** A **Trie (Prefix Tree)** data structure predicts queries instantly as you type.
+- Custom inverted index for constant-time term lookup
+- Trie-based autocomplete with linear time complexity
+- Fuzzy matching using Levenshtein distance for typo tolerance
 
-### 🔍 Discovery & UX
-* **Graph-Based Recommendations:** A recommendation engine builds a network of books based on authors and categories to suggest "You Might Also Like."
-* **Smart Typo Correction:** Uses Levenshtein distance to find the intended query (e.g., "Pythn" -> "Python").
-* **Integrated PDF Reader:** Read books directly inside the app using a custom `WebView` wrapper.
+### Intelligent Features
 
----
+- Recommendation graph based on category overlap and usage patterns
+- Dynamic filtering by relevance, popularity, year, and rating
+- Memory-mapped caching for frequently accessed index segments
 
-## 🛠️ System Architecture
+### Cloud Sync
 
-DevShelf follows a **Two-Part Architecture** to ensure maximum runtime performance:
-
-1.  **The Offline Factory:** A backend process that ingests raw data, performs heavy calculations (Stemming, Vectorizing, Indexing), and generates optimized JSON artifacts.
-2.  **The Online Storefront:** A lightweight JavaFX application that loads the pre-computed artifacts. It follows the **Model-View-Controller (MVC)** pattern with a **Service Facade** layer.
-
-### Tech Stack
-* **Language:** Java 17 (Temurin)
-* **GUI:** JavaFX + CSS (Custom Modern Design)
-* **Build Tool:** Maven (Shaded Fat-JAR)
-* **Data Processing:** Jackson (JSON), Snowball Stemmer (NLP)
+- Automatically fetches the latest index and metadata on startup
+- Feedback pipeline captures missing content requests
 
 ---
 
-## 📸 Screenshots
+## 📥 Installation
 
-| Home Screen (Trending) | Detail View & Graph |
-|:---:|:---:|
-| ![Home Screen](path/to/screenshot1.png) | ![Detail View](path/to/screenshot2.png) |
+### For Users (Windows)
 
----
-
-## 📥 Installation & Usage
-
-**No Java Installation Required.** DevShelf is deployed as a portable application.
-
-1.  Go to the [**Releases Page**](../../releases).
-2.  Download **`DevShelf.zip`**.
-3.  Extract the zip file.
-4.  Open the folder and run **`DevShelf.exe`**.
-
-*Note: The application will create a folder in your `%APPDATA%/DevShelf` directory to store logs and learn from your usage.*
+1. Open the Releases page
+2. Download `DevShelf-Setup.exe`
+3. Run the installer
+4. Launch the application
 
 ---
 
-## 🏗️ Build from Source
+### For Developers
 
-If you want to modify the code or build it yourself:
+DevShelf is a Maven-based Java project.
 
-1.  **Clone the repo**
-    ```bash
-    git clone [https://github.com/Kas-sim/DevShelf.git](https://github.com/Kas-sim/DevShelf.git)
-    ```
-2.  **Build the Index (Offline Step)**
-    Run `core.IndexerMain` in your IDE. This generates `src/main/resources/data/index_data.json`.
-3.  **Package the App**
-    ```bash
-    mvn clean package
-    ```
-4.  **Create Portable Image (Requires JDK 17 with jpackage)**
-    ```bash
-    jpackage --type app-image --name "DevShelf" --input target/ --main-jar DevShelf-1.0-SNAPSHOT.jar --main-class core.Launcher --dest target/release
-    ```
+```bash
 
----
+git clone https://github.com/Kas-sim/DevShelf.git
+cd DevShelf
+mvn clean install
+mvn javafx:run
 
-## 👨‍💻 Project Structure
+```
 
-* `core`: Application entry points (`GuiMain`, `IndexerMain`).
-* `features`: Pure logic modules (`search`, `recommendation`).
-* `ui.gui`: Frontend logic (`controllers`, `services`, `fxml`).
-* `storage`: Data persistence and loading.
-* `domain`: Data models (POJOs).
+## 👥 Engineering Team
+
+| Name | Role | Focus |
+|------|------|-------|
+| Muhammad Qasim | Lead Architect | Core search engine, system architecture, ranking algorithms |
+| Nancy Chawla | Frontend Engineer | JavaFX UI, UX design, view controllers |
+| Ritika Lund | Feature Engineer | Recommendations, filtering logic, data analysis |
 
 ---
 
-**Developed by Kas-sim** *Built to explore Advanced Data Structures & Algorithms.*
+## 📄 License
+
+This project is licensed under the MIT License.  
+See the `LICENSE` file for details.
+
+---
+
+Built with pure Java, mathematics, and first principles.
+
+
