@@ -1,319 +1,326 @@
+# Chapter 1: User Interface (UI) Presentation
 
+Welcome to the exciting world of DevShelf! This is where we begin our journey into understanding how this awesome digital library works. Think of DevShelf like a person you're meeting for the first time. The very first thing you notice is their face – how they look, how they smile, and how they react when you talk to them.
 
-Welcome to DevShelf! This tutorial will guide you through how our digital library application works, starting from the very beginning: how it wakes up and gets ready to serve you.
+In the world of software, this "face" is called the **User Interface (UI)**.
 
-### The Application's "Main Director"
+### What is the "Face" of DevShelf?
 
-Imagine our DevShelf application as a grand play. For any play to begin, you need a **Main Director**. This director doesn't act in the play, but they are crucial for making sure everything is in place before the curtain rises. They:
+The User Interface (UI) Presentation is literally **everything you see and interact with** when you use DevShelf. It's how the application "talks" to you and how you "talk" back to it.
 
-1.  **Gather the Props:** Load all the books and the special "search index" (a magical guide that helps find books quickly).
-2.  **Assemble the Actors:** Bring together all the specialized "services" or "smart tools" like the `QueryProcessor` (who understands your search), the `ReRanker` (who makes sure the best books appear first), and the `Suggester` (who helps with typos).
-3.  **Set the Stage:** Prepare the user interface, whether it's a simple text-based command line (CLI) or a fancy graphical window (GUI).
-4.  **Signal the Start:** Once everything is ready, they tell the play to begin, allowing you, the user, to interact with the application.
+Imagine DevShelf as a super-smart librarian. This librarian knows about thousands of books, but without a way to communicate, you'd never know what books they have! The UI is the librarian's ability to:
 
-This "Main Director" role is exactly what "Application Startup & Flow Control" is all about in DevShelf. It's the brain that orchestrates the entire application, making sure it initializes correctly and manages the overall sequence of operations.
+1.  **Show Information:** Display a list of books, tell you a book's title, author, and rating, or show a welcome message.
+2.  **Gather Input:** Understand when you type a search query, click a button, or choose an option.
 
-### Your First Interaction: Starting DevShelf
+It takes all the complex information and powerful search logic happening "behind the scenes" and translates it into something simple, clear, and easy for you to use.
 
-Before you can search for your favorite book, DevShelf needs to start. We offer two ways to use DevShelf: a Command Line Interface (CLI) where you type commands, and a Graphical User Interface (GUI) with buttons and windows.
+#### The Problem Our UI Solves
 
-Let's see how you'd typically start each version:
+Let's consider a central task: **finding and viewing books**.
 
-#### Starting the CLI Version
+You want to search for "Java" books. How do you type "Java"? And once DevShelf finds those books, how does it *show* them to you? Without a UI, DevShelf would be a brilliant system that couldn't interact with anyone! Our UI solves this by providing the visual elements and interaction points needed to make this simple.
 
-To start the CLI version, you would run the `Main` class.
+### Two Ways DevShelf Shows Its Face: CLI vs. GUI
 
-**`src/main/java/core/Main.java` (Simplified)**
+DevShelf actually has two different "faces," or types of UIs, to cater to different user preferences:
+
+1.  **CLI (Command Line Interface):** This is a text-based interface. You type commands, and DevShelf responds with text. It's like talking to our librarian by writing notes and getting notes back.
+2.  **GUI (Graphical User Interface):** This is a visual interface with windows, buttons, pictures, and more. You use your mouse and keyboard to click, type, and navigate. It's like talking to our librarian face-to-face in a beautifully designed library.
+
+Both UIs achieve the same goal: letting you search for books and see the results.
+
+#### 1. The CLI's Face: Simple Text Commands
+
+In the CLI version, the `CliView` class is the main component for displaying text and reading your input. It’s straightforward: it prints messages, then waits for you to type something.
+
+**`src/main/java/ui/cli/CliView.java` (Simplified)**
 ```java
-package core;
+package ui.cli;
 
-import storage.BookLoader;
-import storage.IndexLoader;
-import ui.cli.CliView;
-// ... other imports
+import domain.Book; // Our book data structure from the next chapter
+import java.util.List;
+import java.util.Scanner; // Tool to read keyboard input
 
-public class Main {
-    public static void main(String[] args) {
-        System.out.println("📖 Assembling DevShelf Engine...");
+public class CliView {
+    private final Scanner scanner = new Scanner(System.in);
 
-        // 1. Load All Data (e.g., books and search index)
-        // BookLoader bookLoader = new BookLoader(...);
-        // List<Book> allBooks = bookLoader.loadBooks();
-        // IndexLoader indexLoader = new IndexLoader(...);
-        // SearchIndexData loadedData = indexLoader.loadIndex();
+    public void showResults(String query, List<Book> books) {
+        if (books.isEmpty()) {
+            System.out.println("❌ No results found for \"" + query + "\"");
+            return;
+        }
+        System.out.println("✅ Showing results for \"" + query + "\":");
+        for (int i = 0; i < books.size() && i < 3; i++) { // Show top 3 for brevity
+            Book book = books.get(i);
+            System.out.printf("  [%d] %s by %s (Rating: %.1f)\n",
+                    i + 1, book.getTitle(), book.getAuthor(), book.getRating());
+        }
+    }
 
-        // 2. Build All Services (our smart tools)
-        // QueryProcessor queryProcessor = new QueryProcessor(...);
-        // ReRanker reRanker = new ReRanker(...);
-        // Suggester suggester = new Suggester(...);
-        // ... and other services
-
-        // 3. Build The UI (the CLI view)
-        CliView view = new CliView();
-
-        // 4. Assemble the Controller & Start
-        // BookSearchEngine engine = new BookSearchEngine(bookMap, queryProcessor, ...);
-        // engine.run(); // This starts the main loop!
-        System.out.println("...Assembly complete. Starting application.");
+    public String getSearchQuery() {
+        System.out.print("\n🔍 Enter search query (or 'exit'): ");
+        return scanner.nextLine().trim(); // Reads what you type
     }
 }
 ```
-When you run `Main.java`, it prints messages like "📖 Assembling DevShelf Engine..." as it prepares everything. Then, it will present you with the command-line interface, ready for your search queries.
+*   `showResults`: This method takes a search query and a list of `Book` objects (which we'll learn more about in [Book (Domain Model)](02_book__domain_model__.md)). It then prints out the details of each book directly to your console.
+*   `getSearchQuery`: This method displays a prompt asking you to type your search query. It then waits until you press Enter, captures your typed text, and returns it.
 
-#### Starting the GUI Version
+**Example CLI Interaction:**
 
-For the GUI version, we use a special `Launcher` class to make sure JavaFX (the GUI technology) starts correctly.
-
-**`src/main/java/core/Launcher.java`**
-```java
-package core;
-
-public class Launcher {
-    public static void main(String[] args) {
-        // We delegate to the real JavaFX class.
-        // This tricks the JVM into loading the classpath correctly first.
-        GuiMain.main(args);
-    }
-}
 ```
-This `Launcher` simply calls `GuiMain.main(args)`. The `GuiMain` class then does the actual work of setting up the graphical window:
+🔍 Enter search query (or 'exit'): Java
 
-**`src/main/java/core/GuiMain.java` (Simplified)**
-```java
-package core;
-
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import ui.gui.controllers.MainViewController;
-import ui.gui.services.DevShelfService;
-// ... other imports
-
-public class GuiMain extends Application { // Extends Application for JavaFX
-
-    @Override
-    public void start(Stage stage) throws Exception {
-        System.out.println("🚀 Starting DevShelf GUI...");
-
-        // 1. Load Backend Services (Same idea as CLI: books, index, etc.)
-        // BookLoader bookLoader = new BookLoader(...);
-        // Map<Integer, Book> bookMap = ...;
-        // QueryProcessor queryProcessor = ...;
-        // ... and other services
-
-        // 2. Create the App Brain (a special service for the GUI)
-        // DevShelfService service = new DevShelfService(bookMap, queryProcessor, ...);
-
-        // 3. Load the UI (from an FXML file, which describes the window layout)
-        // FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/gui/fxml/MainView.fxml"));
-        // Parent root = loader.load();
-
-        // 4. Inject the Brain into the Controller (connects UI to logic)
-        // MainViewController controller = loader.getController();
-        // controller.setService(service);
-
-        // 5. Show Window
-        // Scene scene = new Scene(root);
-        // stage.setScene(scene);
-        // stage.setTitle("DevShelf - Library Search Engine");
-        // stage.show();
-
-        System.out.println("✅ GUI Started successfully.");
-    }
-
-    public static void main(String[] args) {
-        launch(args); // This calls the start method above
-    }
-}
+✅ Showing results for "Java":
+  [1] Clean Code by Robert C. Martin (Rating: 4.6)
+  [2] Effective Java by Joshua Bloch (Rating: 4.8)
+  [3] Head First Java by Kathy Sierra (Rating: 4.3)
 ```
-When `GuiMain` runs, you'll see messages like "🚀 Starting DevShelf GUI..." and then a beautiful DevShelf window will pop up on your screen, ready for you to type in the search bar.
+In this example, `getSearchQuery` printed the prompt, you typed "Java", and then `showResults` displayed the books found.
 
-### Under the Hood: The Startup Sequence
+#### 2. The GUI's Face: Windows, Buttons, and Images
 
-Whether you launch the CLI or GUI, the core steps for getting DevShelf ready are very similar. Let's visualize this process like a coordinated dance:
+The GUI version of DevShelf uses a special framework called **JavaFX** to create visually rich interfaces. Instead of just printing text, it draws everything: windows, buttons, text boxes, and even book covers!
+
+Building a GUI with JavaFX often involves two main ingredients:
+
+1.  **FXML Files (The Blueprints):** These are like architectural drawings for what your screens look like. They describe *where* each button, label, and image should be placed, and *how* they are organized. For DevShelf, we have blueprints like `MainView.fxml` (for the main search screen) and `BookCard.fxml` (for how a single book looks in the results list).
+2.  **Controller Classes (The Workers):** These are Java classes (like `.java` files in the `ui.gui.controllers` package) that are the "brains" behind the FXML blueprints. They handle *what happens* when you click something, *how to fill* a text field with data, and *how to react* to your actions. Each FXML blueprint usually has a dedicated worker (controller).
+
+Let's trace how these pieces work together when you search for a book in the GUI:
 
 ```mermaid
 sequenceDiagram
     participant You
-    participant Launcher/Main App
-    participant Storage Loaders
-    participant Core Services
-    participant User Interface
-    participant Search Engine
+    participant MainViewController
+    participant DevShelfService
+    participant BookCardController
+    participant GUI Window
 
-    You->>Launcher/Main App: "Start DevShelf!"
-    Launcher/Main App->>Storage Loaders: "Load all books & search index data"
-    Note over Storage Loaders: Reads data from `book.json` and `index_data.json`
-    Storage Loaders-->>Launcher/Main App: "Here's the data!"
-    Launcher/Main App->>Core Services: "Create smart tools (QueryProcessor, ReRanker, etc.)"
-    Note over Core Services: These tools understand queries, rank results, suggest typos
-    Core Services-->>Launcher/Main App: "Tools are ready!"
-    Launcher/Main App->>User Interface: "Prepare the display (CLI text or GUI window)"
-    User Interface-->>Launcher/Main App: "Display is ready!"
-    Launcher/Main App->>Search Engine: "Assemble the main 'engine' with data, tools, and UI"
-    Search Engine->>User Interface: "Show welcome message / main search screen"
-    User Interface-->>You: "DevShelf is ready to use!"
-    You->>User Interface: "Type a search query..."
+    You->>MainViewController: Type "Python" in search bar, press Enter
+    MainViewController->>DevShelfService: search("Python")
+    Note over DevShelfService: Finds books (e.g., "Fluent Python", "Python Crash Course")
+    DevShelfService-->>MainViewController: Returns List<Book>
+    loop For each Book in the list
+        MainViewController->>MainViewController: Load BookCard.fxml blueprint
+        MainViewController->>BookCardController: new instance
+        MainViewController->>BookCardController: setData(a Book object)
+        Note over BookCardController: Fills labels, loads cover image for this book
+        BookCardController-->>MainViewController: Ready visual Book Card element
+        MainViewController->>GUI Window: Add Book Card to results list
+    end
+    MainViewController-->>GUI Window: Update status message
+    GUI Window-->>You: Displays list of visual Book Cards
 ```
+This diagram shows that when you type a query in the GUI, the `MainViewController` (the main screen's brain) asks a central `DevShelfService` (the application's core brain) for results. For each [Book (Domain Model)](02_book__domain_model__.md) it gets back, the `MainViewController` uses the `BookCard.fxml` blueprint and its `BookCardController` worker to create a visual "card" for that book, and then displays it in the window.
 
-This sequence shows how the "Application Startup & Flow Control" layer (`Launcher/Main App` and `Search Engine` in the diagram) brings together different parts of the system.
+### Displaying Search Results and Handling New Searches (Code Examples)
 
-### Comparing CLI and GUI Startup
+Let's look at how the GUI code actually makes this happen.
 
-While the core steps are similar, there are some differences in how the CLI and GUI versions set things up:
+#### The Main Search Screen (`MainView.fxml` & `MainViewController.java`)
 
-| Feature                   | CLI Version (`core/Main.java`)                                    | GUI Version (`core/GuiMain.java`)                                |
-| :------------------------ | :---------------------------------------------------------------- | :--------------------------------------------------------------- |
-| **Main Entry Point**      | `public static void main(String[] args)` directly in `Main.java`  | `main` in `Launcher.java` calls `GuiMain.main(args)`, which uses `start()` method |
-| **User Interface Class**  | `CliView` ([User Interface Presentation](03_user_interface_presentation_.md))                                 | JavaFX FXML (`MainView.fxml`), managed by `MainViewController` ([User Interface Presentation](03_user_interface_presentation_.md)) |
-| **Core Logic Controller** | `BookSearchEngine` ([Core Search Engine](05_core_search_engine_.md))                                      | `DevShelfService` (a dedicated service for the GUI)              |
-| **Interaction Flow**      | `BookSearchEngine.run()` contains a `while(true)` loop for user input | UI events (e.g., button clicks) call methods in `DevShelfService` |
+The `MainView.fxml` is the blueprint for our main screen. It defines elements like the search box and where the results go.
 
-Notice how both versions load the same underlying data (books, search index) and create the same smart tools (like `QueryProcessor` and `ReRanker`). The main difference is how they connect these tools to their specific user interface.
+**`src/main/resources/ui/gui/fxml/MainView.fxml` (Snippet)**
+```xml
+<!-- ... other layout definitions ... -->
+<HBox alignment="CENTER" spacing="10.0">
+    <TextField fx:id="searchField" onAction="#handleSearch" promptText="Search for books..." />
+    <Button fx:id="searchButton" onAction="#handleSearch" text=" Search 🔍" />
+</HBox>
 
-#### The CLI's Main Loop
+<ScrollPane fitToWidth="true">
+    <VBox fx:id="resultsContainer" spacing="10.0" style="-fx-padding: 20;">
+    </VBox>
+</ScrollPane>
+<!-- ... other layout definitions ... -->
+```
+*   `fx:id="searchField"`: This gives a unique name to the search text box so our Java code can easily find and use it.
+*   `onAction="#handleSearch"`: This tells JavaFX: "When the user presses Enter in this box or clicks the search button, call a method named `handleSearch` in our `MainViewController`."
+*   `fx:id="resultsContainer"`: This is a special vertical box (`VBox`) where our program will dynamically add the visual "Book Cards" after a search.
 
-Once the CLI version starts, its `BookSearchEngine` takes over. It enters a continuous loop, waiting for your commands:
+Now, let's see the `MainViewController` code that brings this blueprint to life:
 
-**`src/main/java/core/BookSearchEngine.java` (Simplified `run` method)**
+**`src/main/java/ui/gui/controllers/MainViewController.java` (Simplified)**
 ```java
-package core;
+package ui.gui.controllers;
 
-import ui.cli.CliView;
-// ... other imports
+import domain.Book; // Our Book data from Chapter 2
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader; // To load FXML blueprints
+import javafx.scene.Node;     // A general UI element
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
+import ui.gui.services.DevShelfService; // The app's "brain"
 
-public class BookSearchEngine {
-    private final CliView view; // Our CLI display tool
-    // ... other services and state
+import java.io.IOException;
+import java.util.List;
 
-    public BookSearchEngine( /* ... services, CliView view */ ) {
-        this.view = view;
-        // ... initialize state
+public class MainViewController {
+    @FXML private TextField searchField; // Connected to the search box in FXML
+    @FXML private VBox resultsContainer; // Connected to the results area in FXML
+
+    private DevShelfService service; // Will be set by the main application
+
+    public void setService(DevShelfService service) { this.service = service; }
+
+    @FXML // This method is called when you search
+    private void handleSearch() {
+        String query = searchField.getText(); // Get text from the search box
+        if (query == null || query.trim().isEmpty()) return;
+
+        List<Book> books = service.search(query).books; // Ask the "brain" for books
+        displayBooks(books); // Show the books
     }
 
-    public void run() {
-        view.showWelcomeMessage(bookMap.size()); // Greet the user
-        while (true) { // This loop keeps the application running
-            String query = view.getSearchQuery(); // Ask the user for a search
-            if (query.equalsIgnoreCase("exit")) { // User wants to quit
-                view.showExitMessage();
-                break; // Exit the loop
-            }
-            if (query.isEmpty()) continue; // Skip empty queries
+    private void displayBooks(List<Book> books) {
+        resultsContainer.getChildren().clear(); // Clear old books
 
-            processQuery(query); // Handle the search request
+        for (Book book : books) { // For each book found
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/gui/fxml/BookCard.fxml"));
+                Node card = loader.load(); // Load the blueprint for a book card
+
+                BookCardController cardController = loader.getController();
+                cardController.setData(book); // Tell the card to show this book's data
+
+                card.setOnMouseClicked(e -> openDetailsView(book)); // Make card clickable
+                resultsContainer.getChildren().add(card); // Add the card to the screen
+            } catch (IOException e) { /* handle error */ }
         }
     }
-    // ... other methods like processQuery, applyFilters, handleFilterMenu etc.
+    // ... other methods like openDetailsView ...
 }
 ```
-This `run()` method is the heart of the CLI application's "flow control." It continuously:
-1.  **Gets Input:** `view.getSearchQuery()` asks you what you want to search for.
-2.  **Processes:** Calls `processQuery(query)` to handle the actual search.
-3.  **Repeats:** Goes back to step 1 until you type "exit."
+*   `handleSearch()`: When you type in `searchField` and press Enter, this method is called. It fetches your query, asks the `service` (the core logic of DevShelf) for relevant books, and then calls `displayBooks`.
+*   `displayBooks()`: This method is the star! It clears any old results, then for each `Book` it received, it does the following:
+    1.  Uses `FXMLLoader` to load the `BookCard.fxml` blueprint, creating a new visual "card" element.
+    2.  Gets the `BookCardController` for *that specific card*.
+    3.  Calls `cardController.setData(book)` to tell the card to fill itself with the `Book`'s title, author, etc.
+    4.  Makes the card clickable to show more details.
+    5.  Adds this completed `card` to the `resultsContainer`, making it appear on the screen.
 
-The `processQuery` method then orchestrates the search:
+#### The Single Book Card (`BookCard.fxml` & `BookCardController.java`)
 
-**`src/main/java/core/BookSearchEngine.java` (Simplified `processQuery` method)**
-```java
-// Inside BookSearchEngine class
-private void processQuery(String query) {
-    // 1. Search! Ask the QueryProcessor (our smart search tool)
-    // List<SearchResult> tfIdfResults = queryProcessor.search(query);
+Each book in the search results is a separate `BookCard`. Here’s its blueprint:
 
-    // 2. Re-rank results (make sure the best ones are on top)
-    // List<SearchResult> rankedResults = reRanker.reRank(tfIdfResults, query);
+**`src/main/resources/ui/gui/fxml/BookCard.fxml` (Snippet)**
+```xml
+<!-- ... styling and layout for a nice card effect ... -->
+<HBox alignment="CENTER_LEFT" spacing="15.0"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ui.gui.controllers.BookCardController">
 
-    // 3. Prepare books for display
-    // final List<Book> initialBooks = rankedResults.stream()...;
-
-    // This nested loop lets you filter/sort results for the *current* query
-    while (true) {
-        // A. Apply any filters or sorting you've set
-        // List<Book> filteredBooks = applyFilters(initialBooks);
-        // applySort(filteredBooks);
-
-        // B. Display the results
-        // view.showResults(query, filteredBooks);
-
-        // C. Get your next action (filter, sort, new search, etc.)
-        // String choice = view.getActionPrompt();
-        // switch (choice) {
-        //     case "f": handleFilterMenu(); break;
-        //     case "n": return; // Go back to the main search loop
-        //     // ... other actions
-        // }
-    }
-}
+    <ImageView fx:id="coverImage" fitHeight="100.0" fitWidth="70.0" />
+    <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+        <Label fx:id="titleLabel" text="Book Title" />
+        <HBox spacing="10.0" alignment="CENTER_LEFT">
+            <Label fx:id="authorLabel" text="Author Name" />
+            <Label fx:id="ratingLabel" text="4.7 ★" />
+        </HBox>
+    </VBox>
+</HBox>
 ```
-Inside `processQuery`, there's another loop that allows you to refine your search results (filter, sort) before going back to the main `run()` loop for a brand new search. This shows a clear flow of control, moving from getting a query to processing it, displaying results, and then asking for the next action.
+*   This FXML describes a horizontal box (`HBox`) that contains an `ImageView` for the book cover and a `VBox` for the title, author, and rating `Label`s.
+*   The `fx:id` attributes link these visual elements to our controller.
 
-#### The GUI's Service Approach
+And here's the worker that fills the card with actual book data:
 
-The GUI works a bit differently. Instead of a `while(true)` loop, the `DevShelfService` handles specific requests from the user interface. When you type in the search bar and press Enter, the GUI controller calls the `search` method of `DevShelfService`:
-
-**`src/main/java/ui/gui/services/DevShelfService.java` (Simplified `search` method)**
+**`src/main/java/ui/gui/controllers/BookCardController.java` (Simplified)**
 ```java
-package ui.gui.services;
+package ui.gui.controllers;
 
 import domain.Book;
-import domain.SearchResult;
-import features.search.QueryProcessor;
-import features.search.ReRanker;
-import features.search.Suggester;
-// ... other imports
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
-public class DevShelfService {
-    private final QueryProcessor queryProcessor;
-    private final ReRanker reRanker;
-    private final Suggester suggester;
-    // ... other services and bookMap
+public class BookCardController {
+    @FXML private Label titleLabel;
+    @FXML private Label authorLabel;
+    @FXML private Label ratingLabel;
+    @FXML private ImageView coverImage;
 
-    public DevShelfService( /* ... services and bookMap */ ) {
-        this.queryProcessor = queryProcessor;
-        this.reRanker = reRanker;
-        this.suggester = suggester;
-        // ... initialize other services
+    // This method is called by MainViewController to fill the card
+    public void setData(Book book) {
+        titleLabel.setText(book.getTitle());
+        authorLabel.setText(book.getAuthor());
+        ratingLabel.setText(String.format("%.1f ★", book.getRating()));
+
+        // Try to load the book's cover image
+        String url = (book.getCoverUrl() != null && !book.getCoverUrl().isEmpty())
+                ? book.getCoverUrl() : "https://via.placeholder.com/150x200?text=No+Cover";
+        try {
+            coverImage.setImage(new Image(url, true)); // Load image from URL
+        } catch (Exception e) { /* Fallback silently */ }
     }
-
-    public SearchResponse search(String query) {
-        System.out.println("🔍 GUI Processing Query: [" + query + "]");
-
-        // 1. Raw Search (using our smart QueryProcessor tool)
-        // List<SearchResult> results = queryProcessor.search(query);
-
-        // 2. Handle No Results / Typos (ask the Suggester if needed)
-        // if (results.isEmpty()) {
-        //     String suggestion = suggester.suggestSimilar(query);
-        //     if (suggestion != null) { /* ... search with suggestion ... */ }
-        // }
-
-        // 3. Re-Rank (using our ReRanker tool to sort by popularity/relevance)
-        // List<SearchResult> rankedResults = reRanker.reRank(results, usedQuery);
-
-        // 4. Convert to Books (so the UI can display them nicely)
-        // List<Book> books = new ArrayList<>();
-        // for (SearchResult res : rankedResults) { /* ... add book to list ... */ }
-
-        // return new SearchResponse(books, isSuggestion, usedQuery);
-        return null; // Simplified return
-    }
-    // ... other methods like getRecommendationsFor, logClick etc.
 }
 ```
-This `search` method is called each time you submit a query in the GUI. It performs the same core steps as `processQuery` in the CLI: search, re-rank, and handle suggestions. However, instead of looping for more actions, it returns a `SearchResponse` object containing the results directly to the GUI controller, which then updates the display.
+*   The `setData` method receives a [Book (Domain Model)](02_book__domain_model__.md) object.
+*   It then takes the information from that `Book` and updates the corresponding `Label`s and `ImageView` on the card, making the book visually appear in the search results.
+
+#### The Book Detail View (`BookDetailView.fxml` & `BookDetailController.java`)
+
+When you click on a `BookCard`, DevShelf shows you a new, larger view with all the book's details.
+
+**`src/main/java/ui/gui/controllers/BookDetailController.java` (Simplified `setBookData`)**
+```java
+package ui.gui.controllers;
+
+import domain.Book;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.text.Text;
+
+public class BookDetailController {
+    @FXML private ImageView largeCoverImage;
+    @FXML private Label fullTitle;
+    @FXML private Label authors;
+    @FXML private Text descriptionText;
+
+    // This method is called when the details window opens
+    public void setBookData(Book book, /* ... other details ... */) {
+        fullTitle.setText(book.getTitle());
+        authors.setText(book.getAuthor());
+        descriptionText.setText(book.getDescription());
+
+        String url = (book.getCoverUrl() != null && !book.getCoverUrl().isEmpty())
+                     ? book.getCoverUrl()
+                     : "https://via.placeholder.com/150x200?text=No+Cover";
+        largeCoverImage.setImage(new Image(url, true));
+    }
+
+    @FXML private void handleBack() { /* Code to close this window */ }
+    @FXML private void handleRead() { /* Code to open book PDF */ }
+}
+```
+*   The `setBookData` method receives a [Book (Domain Model)](02_book__domain_model__.md) object and populates all the detailed labels and the larger cover image on the screen, giving you a full overview of the book.
+
+### Comparing CLI and GUI for User Interface Presentation
+
+Here’s a quick summary of how the two interfaces work:
+
+| Feature                   | CLI Version (`CliView.java`)                  | GUI Version (JavaFX FXML & Controllers)                                            |
+| :------------------------ | :-------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **How Info is Shown**     | `System.out.println()` for plain text         | Visual elements like `Label`, `ImageView`, `VBox` defined in FXML, managed by Java |
+| **How Input is Gathered** | `Scanner.nextLine()` reads typed text         | `TextField` for typing, `Button` for clicking (FXML defined, Java handled)         |
+| **Appearance**            | Text-only, limited formatting                 | Rich graphics, colors, fonts, images defined in FXML and styled with CSS           |
+| **Core Parts**            | `CliView` class                               | FXML files (blueprints) and Controller classes (workers)                           |
+| **Interaction Style**     | Sequential: Prompt -> Type -> Enter -> Output | Event-driven: Clicks and types trigger specific actions                              |
 
 ### Conclusion
 
-In this chapter, we learned that "Application Startup & Flow Control" is like the main director of our DevShelf application. It handles the critical tasks of:
-*   **Initialization:** Loading all essential data like books and the search index.
-*   **Service Assembly:** Creating and preparing all the specialized tools (like `QueryProcessor`, `ReRanker`, `Suggester`) that make DevShelf smart.
-*   **User Interface Setup:** Getting either the Command Line Interface (CLI) or the Graphical User Interface (GUI) ready for you.
-*   **Orchestration:** Managing the overall flow, whether it's a continuous command loop in the CLI or handling specific requests from the GUI.
+In this chapter, we learned that "User Interface (UI) Presentation" is the "face" of DevShelf. It's how the application communicates with you, showing you information like search results and gathering your input like search queries.
 
-This entire process ensures that when you finally see DevShelf, everything is perfectly set up and ready for your search adventure!
+We saw that DevShelf offers two types of faces:
+*   The **CLI** (Command Line Interface) for a text-based experience using the `CliView` class.
+*   The **GUI** (Graphical User Interface) for a visual experience using JavaFX, where **FXML files** act as blueprints for the layout, and **Controller classes** (like `MainViewController` and `BookCardController`) act as workers to manage behavior and display the book data.
 
-Next, we'll dive into the most important "prop" in our play: the `Book` itself, which is our core piece of data.
+Understanding the UI is crucial because it's your window into the DevShelf system. Now that we know how books are presented to you, let's dive into the core data structure that holds all the information about these books!
 
 [Next Chapter: Book (Domain Model)](02_book__domain_model__.md)
