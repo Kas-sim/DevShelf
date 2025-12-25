@@ -47,14 +47,14 @@ flowchart TD
 
 ## Chapters
 
-1. [User Interface (UI) Presentation](./Chapter%20:%20Overview%20of%20DevShelf.md)
+1. [User Interface (UI) Presentation](./01%20user%20interface%20presentation.md)
 2. [Book (Domain Model)](./02%20book%20domain%20model.md)
 3. [Application Orchestration](./03%20application%20orchestration.md)
 4. [Core Search Engine](./04%20core%20search%20engine.md)
 5. [Text Preprocessing](./05%20text%20preprocessing.md)
 6. [Offline Search Indexing](./06%20offline%20search%20indexing.md)
 7. [Intelligent Search Enhancements](./07%20intelligent%20search%20enhancements.md)
-8. [User Behavior Analytics](./08%20user%20behavior%20analytics%20.md)
+8. [User Behavior Analytics](./08%20user%20behavior%20analytics.md)
 
 
 
