@@ -3302,6 +3302,25 @@
     "rating": "4.8",
     "coverUrl": "https://i.ibb.co/LhxPjncB/205.jpg",
     "downLink": "https://kvongcmehsanalibrary.wordpress.com/wp-content/uploads/2021/07/harrypotter.pdf"
+  },
+  {
+    "bookId": 207,
+    "title": "Probability & Statistics for Engineers and Scientists (Ninth Edition)",
+    "author": "Ronald E. Walpole, Raymond H. Myers, Sharon L. Myers, Keying Ye",
+    "description": "A comprehensive textbook covering probability theory and statistical methods with applications in engineering and the sciences. Widely used for undergraduate engineering and science courses.",
+    "progLang": "English",
+    "category": "Mathematics",
+    "tag": [
+      "Probability",
+      "Statistics",
+      "Engineering",
+      "Science",
+      "Mathematics",
+      "Textbook"
+    ],
+    "rating": "4.6",
+    "coverUrl": "https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1348971620i/9637420.jpg",
+    "downLink": "https://dl.icdst.org/pdfs/files4/f5087fa30778ccd742790526c0d6be83.pdf"
   }
 
 ]
